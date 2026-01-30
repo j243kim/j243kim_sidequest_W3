@@ -1,104 +1,117 @@
-// NOTE: Do NOT add setup() or draw() in this file
-// setup() and draw() live in main.js
-// This file only defines:
+// ------------------------------------------------------------
+// instructions.js - Instructions Screen
+// ------------------------------------------------------------
+// This file defines:
 // 1) drawInstr() → what the instructions screen looks like
 // 2) input handlers → how the player returns to the start screen
-// 3) helper functions specific to this screen
 
-// ------------------------------
+// ------------------------------------------------------------
 // Main draw function for instructions screen
-// ------------------------------
-// drawInstr() is called from main.js
-// only when currentScreen === "instr"
+// ------------------------------------------------------------
 function drawInstr() {
-  // Light neutral background
-  background(240);
+  // Dark parchment-style background
+  background(60, 50, 40);
 
   // ---- Screen title ----
-  fill(0);
+  noStroke();
+  fill(255, 240, 200);
   textAlign(CENTER, TOP);
-  textSize(36);
-  text("Instructions", width / 2, 80);
+  textSize(40);
+  text("How to Play", width / 2, 80);
 
   // ---- Instruction text ----
-  textSize(18);
+  textSize(20);
+  fill(220, 210, 180);
+  textAlign(CENTER, TOP);
 
-  // \n creates a line break in the text
-  // This is useful for simple multi-line instructions
-  const lines =
-    "Press the game button.\n" + "You have a chance to win or lose!";
+  const instructions = [
+    "Welcome, traveler, to The Mysterious Forest.",
+    "",
+    "Your journey will present you with choices.",
+    "Each decision affects your KARMA.",
+    "",
+    "Good deeds increase karma (+1)",
+    "Selfish acts decrease karma (-1)",
+    "",
+    "Your final karma determines your ending:",
+    "Karma >= 1 : Good Ending",
+    "Karma < 1 : Bad Ending",
+    "",
+    "Choose wisely, for the forest remembers all.",
+  ];
 
-  text(lines, width / 2, 160);
+  let yPos = 160;
+  for (let line of instructions) {
+    text(line, width / 2, yPos);
+    yPos += 30;
+  }
 
   // ---- Back button ----
-  // This button lets the player return to the start screen
   const backBtn = {
-    x: width / 2, // centred horizontally
-    y: 560,
+    x: width / 2,
+    y: 620,
     w: 220,
     h: 70,
     label: "BACK",
   };
 
-  // Draw the back button
   drawInstrButton(backBtn);
 
-  // Change cursor when hovering over the button
+  // ---- Footer hint ----
+  fill(150, 140, 120);
+  textSize(14);
+  text("Press ESC or B to go back", width / 2, 710);
+
   cursor(isHover(backBtn) ? HAND : ARROW);
 }
 
-// ------------------------------
+// ------------------------------------------------------------
 // Mouse input for instructions screen
-// ------------------------------
-// Called from main.js only when currentScreen === "instr"
+// ------------------------------------------------------------
 function instrMousePressed() {
-  // Button data must match the draw position
-  const backBtn = { x: width / 2, y: 560, w: 220, h: 70 };
+  const backBtn = { x: width / 2, y: 620, w: 220, h: 70 };
 
-  // If the button is clicked, return to the start screen
   if (isHover(backBtn)) {
     currentScreen = "start";
   }
 }
 
-// ------------------------------
+// ------------------------------------------------------------
 // Keyboard input for instructions screen
-// ------------------------------
-// Provides keyboard-only navigation
+// ------------------------------------------------------------
 function instrKeyPressed() {
-  // ESC is a common “go back” key in games and apps
   if (keyCode === ESCAPE) {
     currentScreen = "start";
   }
 
-  // B key is an additional, explicit shortcut for “back”
   if (key === "b" || key === "B") {
     currentScreen = "start";
   }
 }
 
-// ------------------------------
+// ------------------------------------------------------------
 // Button drawing helper (instructions screen)
-// ------------------------------
-// This function is only responsible for drawing the button.
-// It is kept separate so the visual style can be changed
-// without touching input or game logic.
+// ------------------------------------------------------------
 function drawInstrButton({ x, y, w, h, label }) {
   rectMode(CENTER);
-
-  // Check whether the mouse is hovering over the button
   const hover = isHover({ x, y, w, h });
 
   noStroke();
 
-  // Subtle colour change on hover for visual feedback
-  fill(hover ? color(200, 200, 255, 200) : color(220, 220, 255, 170));
+  if (hover) {
+    fill(180, 160, 120, 230);
+    drawingContext.shadowBlur = 15;
+    drawingContext.shadowColor = color(200, 180, 140);
+  } else {
+    fill(140, 120, 80, 200);
+    drawingContext.shadowBlur = 8;
+    drawingContext.shadowColor = color(100, 80, 50);
+  }
 
-  // Draw the button shape
   rect(x, y, w, h, 12);
+  drawingContext.shadowBlur = 0;
 
-  // Draw the button text
-  fill(0);
+  fill(255, 250, 230);
   textSize(26);
   textAlign(CENTER, CENTER);
   text(label, x, y);

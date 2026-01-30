@@ -1,124 +1,144 @@
 // ------------------------------------------------------------
-// main.js = the “router” (traffic controller) for the whole game
+// main.js = the "router" (traffic controller) for the whole game
 // ------------------------------------------------------------
 //
-// Idea: this project has multiple screens (start, instructions, game, win, lose).
-// Instead of putting everything in one giant file, each screen lives in its own
-// file and defines two main things:
+// This project has multiple screens representing story scenes.
+// Each screen lives in its own file and defines:
 //   1) drawX()         → how that screen looks
 //   2) XMousePressed() / XKeyPressed() → how that screen handles input
 //
 // This main.js file does 3 important jobs:
-//   A) stores the current screen in a single shared variable
+//   A) stores the current screen and game state
 //   B) calls the correct draw function each frame
 //   C) sends mouse/keyboard input to the correct screen handler
 
 // ------------------------------
 // Global game state
 // ------------------------------
-// This variable is shared across all files because all files run in the same
-// global JavaScript scope when loaded in index.html.
-//
-// We store the “name” of the current screen as a string.
-// Only one screen should be active at a time.
-let currentScreen = "start"; // "start" | "instr" | "game" | "win" | "lose"
+// Current screen tracking
+let currentScreen = "start";
+// Possible values: "start" | "instr" | "scene1" | "scene2_good" | "scene2_bad" | "ending_good" | "ending_bad"
+
+// BONUS: Karma stat that persists across scenes
+// Positive karma = good choices, Negative karma = bad choices
+let karma = 0;
 
 // ------------------------------
 // setup() runs ONCE at the beginning
 // ------------------------------
-// This is where you usually set canvas size and initial settings.
 function setup() {
   createCanvas(800, 800);
-
-  // Sets a default font for all text() calls
-  // (This can be changed later per-screen if you want.)
   textFont("sans-serif");
 }
 
 // ------------------------------
-// draw() runs every frame (many times per second)
+// draw() runs every frame
 // ------------------------------
-// This is the core “router” for visuals.
-// Depending on currentScreen, we call the correct draw function.
+// This is the core "router" for visuals.
 function draw() {
-  // Each screen file defines its own draw function:
-  //   start.js         → drawStart()
-  //   instructions.js  → drawInstr()
-  //   game.js          → drawGame()
-  //   win.js           → drawWin()
-  //   lose.js          → drawLose()
-
   if (currentScreen === "start") drawStart();
   else if (currentScreen === "instr") drawInstr();
-  else if (currentScreen === "game") drawGame();
-  else if (currentScreen === "win") drawWin();
-  else if (currentScreen === "lose") drawLose();
-
-  // (Optional teaching note)
-  // This “if/else chain” is a very common early approach.
-  // Later in the course you might replace it with:
-  // - a switch statement, or
-  // - an object/map of screens
+  else if (currentScreen === "scene1") drawScene1();
+  else if (currentScreen === "scene2_good") drawScene2Good();
+  else if (currentScreen === "scene2_bad") drawScene2Bad();
+  else if (currentScreen === "ending_good") drawEndingGood();
+  else if (currentScreen === "ending_bad") drawEndingBad();
 }
 
 // ------------------------------
 // mousePressed() runs once each time the mouse is clicked
 // ------------------------------
-// This routes mouse input to the correct screen handler.
 function mousePressed() {
-  // Each screen *may* define a mouse handler:
-  // start.js         → startMousePressed()
-  // instructions.js  → instrMousePressed()
-  // game.js          → gameMousePressed()
-  // win.js           → winMousePressed()
-  // lose.js          → loseMousePressed()
-
   if (currentScreen === "start") startMousePressed();
   else if (currentScreen === "instr") instrMousePressed();
-  else if (currentScreen === "game") gameMousePressed();
-  // The ?.() means “call this function only if it exists”
-  // This prevents errors if a screen doesn’t implement a handler.
-  else if (currentScreen === "win") winMousePressed?.();
-  else if (currentScreen === "lose") loseMousePressed?.();
+  else if (currentScreen === "scene1") scene1MousePressed();
+  else if (currentScreen === "scene2_good") scene2GoodMousePressed();
+  else if (currentScreen === "scene2_bad") scene2BadMousePressed();
+  else if (currentScreen === "ending_good") endingGoodMousePressed();
+  else if (currentScreen === "ending_bad") endingBadMousePressed();
 }
 
 // ------------------------------
 // keyPressed() runs once each time a key is pressed
 // ------------------------------
-// This routes keyboard input to the correct screen handler.
 function keyPressed() {
-  // Each screen *may* define a key handler:
-  // start.js         → startKeyPressed()
-  // instructions.js  → instrKeyPressed()
-  // game.js          → gameKeyPressed()
-  // win.js           → winKeyPressed()
-  // lose.js          → loseKeyPressed()
-
   if (currentScreen === "start") startKeyPressed();
   else if (currentScreen === "instr") instrKeyPressed();
-  else if (currentScreen === "game") gameKeyPressed?.();
-  else if (currentScreen === "win") winKeyPressed?.();
-  else if (currentScreen === "lose") loseKeyPressed?.();
+  else if (currentScreen === "scene1") scene1KeyPressed?.();
+  else if (currentScreen === "scene2_good") scene2GoodKeyPressed?.();
+  else if (currentScreen === "scene2_bad") scene2BadKeyPressed?.();
+  else if (currentScreen === "ending_good") endingGoodKeyPressed?.();
+  else if (currentScreen === "ending_bad") endingBadKeyPressed?.();
 }
 
 // ------------------------------------------------------------
 // Shared helper function: isHover()
 // ------------------------------------------------------------
-//
-// Many screens have buttons.
-// This helper checks whether the mouse is inside a rectangle.
-//
-// Important: our buttons are drawn using rectMode(CENTER),
-// meaning x,y is the CENTRE of the rectangle.
-// So we check mouseX and mouseY against half-width/half-height bounds.
-//
+// Checks whether the mouse is inside a rectangle (CENTER mode).
 // Input:  an object with { x, y, w, h }
 // Output: true if mouse is over the rectangle, otherwise false
 function isHover({ x, y, w, h }) {
   return (
-    mouseX > x - w / 2 && // mouse is right of left edge
-    mouseX < x + w / 2 && // mouse is left of right edge
-    mouseY > y - h / 2 && // mouse is below top edge
-    mouseY < y + h / 2 // mouse is above bottom edge
+    mouseX > x - w / 2 &&
+    mouseX < x + w / 2 &&
+    mouseY > y - h / 2 &&
+    mouseY < y + h / 2
   );
+}
+
+// ------------------------------------------------------------
+// Shared helper function: drawKarmaStat()
+// ------------------------------------------------------------
+// Displays the karma stat in the top-left corner
+function drawKarmaStat() {
+  push();
+  fill(0);
+  textSize(18);
+  textAlign(LEFT, TOP);
+
+  // Display karma with a visual indicator
+  let karmaText = "Karma: " + karma;
+  if (karma > 0) karmaText += " ✦";
+  else if (karma < 0) karmaText += " ✧";
+
+  text(karmaText, 20, 20);
+  pop();
+}
+
+// ------------------------------------------------------------
+// Shared helper function: resetGame()
+// ------------------------------------------------------------
+// Resets the game state for a new playthrough
+function resetGame() {
+  karma = 0;
+  currentScreen = "start";
+}
+
+// ------------------------------------------------------------
+// Shared helper function: drawStoryButton()
+// ------------------------------------------------------------
+// Draws a styled button for story scenes
+function drawStoryButton({ x, y, w, h, label }) {
+  rectMode(CENTER);
+  const hover = isHover({ x, y, w, h });
+
+  noStroke();
+
+  if (hover) {
+    fill(255, 220, 180, 230);
+    drawingContext.shadowBlur = 18;
+    drawingContext.shadowColor = color(255, 200, 150);
+  } else {
+    fill(255, 245, 220, 200);
+    drawingContext.shadowBlur = 6;
+    drawingContext.shadowColor = color(200, 200, 200);
+  }
+
+  rect(x, y, w, h, 12);
+  drawingContext.shadowBlur = 0;
+
+  fill(50, 40, 30);
+  textSize(22);
+  textAlign(CENTER, CENTER);
+  text(label, x, y);
 }
